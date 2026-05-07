@@ -146,7 +146,6 @@ nav a:hover::after {
 .hero {
     text-align: center;
     animation: fadeIn 1s ease-in;
-    min-height: 80vh;
 }
 
 .hero h2 {
