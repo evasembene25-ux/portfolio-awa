@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Réseau d'entreprise</title>
+    <title>Répertoire téléphonique</title>
 
     <link rel="stylesheet" href="../css/projets.css">
 </head>
@@ -58,7 +58,7 @@
 
         <div class="project-buttons">
 
-            <a href="../index.html" class="btn">
+            <a href="../index.php" class="btn">
                 Retour à l'accueil
             </a>
 

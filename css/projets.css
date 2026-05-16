@@ -75,3 +75,12 @@
     transition: 0.3s;
     font-size: 17px;
 }
+
+.project-details {
+    width: 80%;
+    margin: 60px auto;
+    padding: 50px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}

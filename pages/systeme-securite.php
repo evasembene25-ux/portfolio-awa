@@ -58,7 +58,7 @@
 
         <div class="project-buttons">
 
-            <a href="../index.html" class="btn">
+            <a href="../index.php" class="btn">
                 Retour à l'accueil
             </a>
 
