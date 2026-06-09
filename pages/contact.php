@@ -1,68 +1,130 @@
-<?php require '../fonctions.php'; ?>
-<?php require '../components/header.php'; ?>
+<?php
+session_start();
+require_once '../config/connexion.php';
+require_once '../fonctions.php';
+enregistrerVisite($pdo, 'Contact');
+require '../components/header.php';
 
+?>
 <?php
 
 $nom = "";
 $email = "";
 $message = "";
+$type_projet = "";
+$description = "";
 
 $erreurs = [];
 $demande = [];
 $success_projet = false;
+$csrf = genererCSRF();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $type_projet = nettoyer($_POST["type_projet"] ?? '');
-    $description = nettoyer($_POST["description"] ?? '');
-
+    if (!verifierCSRF($_POST['csrf'] ?? '')) {
+        die("Jeton CSRF invalide");
+    }
+    $formulaire = $_POST['formulaire'] ?? '';
     $nom = nettoyer($_POST["nom"] ?? '');
     $email = nettoyer($_POST["email"] ?? '');
-    $message = nettoyer($_POST["message"] ?? '');
 
-    if (!champ_requis($nom)) {
-        $erreurs[] = "Le nom est obligatoire";
+    if ($formulaire === 'contact') {
+
+        $message = nettoyer($_POST['message'] ?? '');
+
+        if (!champ_requis($nom)) {
+            $erreurs[] = "Le nom est obligatoire";
+        }
+
+        if (!champ_requis($email)) {
+            $erreurs[] = "L'email est obligatoire";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $erreurs[] = "Email invalide";
+        }
+
+        if (!champ_requis($message)) {
+            $erreurs[] = "Le message est obligatoire";
+        }
     }
 
-    if (!champ_requis($email)) {
-        $erreurs[] = "L'email est obligatoire";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $erreurs[] = "Email invalide";
-    }
+    if ($formulaire === 'projet') {
 
-    if (!champ_requis($message)) {
-        $erreurs[] = "Le message est obligatoire";
-    }
-    if (!champ_requis($type_projet)) {
-        $erreurs[] = "Le type de projet est obligatoire";
-    }
+        $type_projet = nettoyer($_POST['type_projet'] ?? '');
+        $description = nettoyer($_POST['description'] ?? '');
 
-    if (!champ_requis($description)) {
-        $erreurs[] = "La description du projet est obligatoire";
+        if (!champ_requis($nom)) {
+            $erreurs[] = "Le nom est obligatoire";
+        }
+
+        if (!champ_requis($email)) {
+            $erreurs[] = "L'email est obligatoire";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $erreurs[] = "Email invalide";
+        }
+
+        if (!champ_requis($type_projet)) {
+            $erreurs[] = "Le type de projet est obligatoire";
+        }
+
+        if (!champ_requis($description)) {
+            $erreurs[] = "La description est obligatoire";
+        }
     }
 
     if (empty($erreurs)) {
-        $demande = [
-            "nom" => $nom,
-            "email" => $email,
-            "type_projet" => $type_projet,
-            "description" => $description
-        ];
 
-        $success_projet = true;
+        if ($formulaire === 'contact') {
+
+            $sql = "INSERT INTO messages_contact
+                (nom, email, message)
+                VALUES (?, ?, ?)";
+
+            $requete = $pdo->prepare($sql);
+
+            $requete->execute([
+                $nom,
+                $email,
+                $message
+            ]);
+
+            $success = "Message envoyé avec succès.";
+        }
+
+        if ($formulaire === 'projet') {
+
+            $sql = "INSERT INTO demandes_projet
+                (nom, email, type_projet, description)
+                VALUES (?, ?, ?, ?)";
+
+            $requete = $pdo->prepare($sql);
+
+            $requete->execute([
+                $nom,
+                $email,
+                $type_projet,
+                $description
+            ]);
+            $demande = [
+                "nom" => $nom,
+                "email" => $email,
+                "type_projet" => $type_projet,
+                "description" => $description
+            ];
+
+            $success_projet = true;
+            $message_projet = "Votre demande de projet a été envoyée avec succès.";
+        }
     }
 }
 ?>
 <?php if (!empty($erreurs)) : ?>
     <div class="erreurs">
         <?php foreach ($erreurs as $erreur) : ?>
-            <p><?= $erreur ?></p>
+            <p><?= htmlspecialchars($erreur) ?></p>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
-<?php if (isset($success)) : ?>
-    <p class="success"><?= $success ?></p>
-<?php endif; ?>
+
 
 <section class="contact-premium">
 
@@ -80,6 +142,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <h3>Contact rapide</h3>
 
             <form method="POST">
+                <input type="hidden" name="formulaire" value="contact">
+                <input type="hidden" name="csrf" value="<?= $csrf ?>">
                 <div class="field">
                     <input type="text" name="nom" value="<?= $nom ?>">
                     <label for="nom">Nom</label>
@@ -97,88 +161,77 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 <button type="submit">Envoyer</button>
             </form>
+            <?php if (isset($success)) : ?>
+                <p class="success"><?= $success ?></p>
+            <?php endif; ?>
         </div>
 
 
         <!-- PROJET -->
-        <section class="contact-premium">
-            <?php
 
-            $success_projet = false;
-            $demande = [];
+        <div class="contact-box project-box">
+            <h3>Demande de projet</h3>
 
-            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            <form method="POST">
+                <input type="hidden" name="formulaire" value="projet">
+                <input type="hidden" name="csrf" value="<?= $csrf ?>">
+                <div class="field">
+                    <input type="text" name="nom" required>
+                    <label>Nom</label>
+                </div>
 
-                $demande = [
-                    "nom" => nettoyer($_POST["nom"] ?? ''),
-                    "email" => nettoyer($_POST["email"] ?? ''),
-                    "type_projet" => nettoyer($_POST["type_projet"] ?? ''),
-                    "description" => nettoyer($_POST["description"] ?? '')
-                ];
+                <div class="field">
+                    <input type="email" name="email" required>
+                    <label>Email</label>
+                </div>
 
-                $success_projet = true;
-            }
+                <div class="field">
+                    <input type="text" name="type_projet" required>
+                    <label>Type de projet</label>
+                </div>
 
-            ?>
+                <div class="field">
+                    <textarea name="description" required></textarea>
+                    <label>Décrivez votre projet</label>
+                </div>
 
-            <div class="contact-box project-box">
-                <h3>Demande de projet</h3>
+                <button type="submit">Lancer le projet</button>
 
-                <form method="POST">
+            </form><?php if (isset($message_projet)) : ?>
+                <p class="success">
+                    <?= htmlspecialchars($message_projet) ?>
+                </p>
+            <?php endif; ?>
+            <?php if ($success_projet) : ?>
 
-                    <div class="field">
-                        <input type="text" name="nom" required>
-                        <label>Nom</label>
-                    </div>
+                <div class="recap">
 
-                    <div class="field">
-                        <input type="email" name="email" required>
-                        <label>Email</label>
-                    </div>
+                    <h3>Récapitulatif de votre demande</h3>
 
-                    <div class="field">
-                        <input type="text" name="type_projet" required>
-                        <label>Type de projet</label>
-                    </div>
+                    <p>
+                        <strong>Nom :</strong>
+                        <?= htmlspecialchars($demande['nom']) ?>
+                    </p>
 
-                    <div class="field">
-                        <textarea name="description" required></textarea>
-                        <label>Décrivez votre projet</label>
-                    </div>
+                    <p>
+                        <strong>Email :</strong>
+                        <?= htmlspecialchars($demande['email']) ?>
+                    </p>
 
-                    <button type="submit">Lancer le projet</button>
+                    <p>
+                        <strong>Type :</strong>
+                        <?= htmlspecialchars($demande['type_projet']) ?>
+                    </p>
 
-                </form>
-                <?php if ($success_projet) : ?>
+                    <p>
+                        <strong>Description :</strong>
+                        <?= htmlspecialchars($demande['description']) ?>
+                    </p>
 
-                    <div class="recap">
+                </div>
 
-                        <h3>Récapitulatif de votre demande</h3>
-
-                        <p>
-                            <strong>Nom :</strong>
-                            <?= htmlspecialchars($demande['nom']) ?>
-                        </p>
-
-                        <p>
-                            <strong>Email :</strong>
-                            <?= htmlspecialchars($demande['email']) ?>
-                        </p>
-
-                        <p>
-                            <strong>Type :</strong>
-                            <?= htmlspecialchars($demande['type_projet']) ?>
-                        </p>
-
-                        <p>
-                            <strong>Description :</strong>
-                            <?= htmlspecialchars($demande['description']) ?>
-                        </p>
-
-                    </div>
-
-                <?php endif; ?>
-            </div>
+            <?php endif; ?>
+        </div>
 
 
     </div>

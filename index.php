@@ -1,4 +1,14 @@
-<?php require 'fonctions.php'; ?>
+<?php
+/*require_once 'config/connexion.php';
+→ charge ton fichier de connexion PDO.
+Si PDO arrive à se connecter à la base portfolio, le programme continue.
+*/
+require_once 'config/connexion.php';
+require_once 'fonctions.php';
+
+enregistrerVisite($pdo, 'Accueil');
+
+?>
 <?php require 'components/header.php'; ?>
 <section class="hero fade-in">
 

@@ -1,3 +1,9 @@
+<?php
+require_once '../config/connexion.php';
+require_once '../fonctions.php';
+
+enregistrerVisite($pdo, 'Réseau Entreprise');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 

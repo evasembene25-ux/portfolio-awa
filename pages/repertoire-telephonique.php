@@ -1,3 +1,9 @@
+<?php
+require_once '../config/connexion.php';
+require_once '../fonctions.php';
+
+enregistrerVisite($pdo, 'Répertoire Téléphonique');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 

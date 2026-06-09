@@ -1,95 +1,47 @@
-<?php require '../fonctions.php'; ?>
+<?php
+require_once '../config/connexion.php';
+require_once '../fonctions.php';
+enregistrerVisite($pdo, 'Projets'); ?>
 <?php require '../components/header.php'; ?>
 <?php
 
-$projets = [
+$recherche = $_GET['recherche'] ?? '';
 
-    [
-        "titre" => "Site AVA Senteur",
-        "description" => "Plateforme e-commerce permettant la vente de parfums en ligne.",
-        "image" => "../images/siteinternet.jpeg",
-        "tech" => ["HTML", "CSS", "JavaScript"],
-        "lien" => "ava-senteur.php"
-    ],
+$sql = "SELECT * FROM projets";
 
-    [
-        "titre" => "Poubelle intelligente",
-        "description" => "Système automatisé avec capteurs.",
-        "image" => "../images/poubelle.jpeg",
-        "tech" => ["Arduino"],
-        "lien" => "poubelle-intelligente.php"
-    ],
-
-    [
-        "titre" => "Système de sécurité",
-        "description" => "Solution de surveillance intelligente avec RFID.",
-        "image" => "../images/systemesecurite.jpeg",
-        "tech" => ["Arduino"],
-        "lien" => "systeme-securite.php"
-    ],
-    [
-        "titre" => "Répertoire téléphonique",
-        "description" => " Application permettant de gérer un répertoire téléphonique connecté à une base de données,
-            avec ajout, suppression et recherche de contacts.",
-        "image" => "../images/repertoire.jpeg",
-        "tech" => ["Langage C", "MySQL"],
-        "lien" => "repertoire-telephonique.php"
-    ],
-    [
-        "titre" => "Réseau d'entreprise",
-        "description" => "Configuration d'un réseau d'entreprise avec serveurs, postes clients et services réseau.",
-        "image" => "../images/reseau_entreprise.jpeg",
-        "tech" => ["Cisco"],
-        "lien" => "reseau-entreprise.php"
-    ],
-    [
-        "titre" => "Système de sécurité avancée",
-        "description" => "Réalisation d’un scan réseau afin d’identifier les machines actives, les ports ouverts et les
-            services vulnérables présents sur un réseau local.",
-        "image" => "../images/securiteavance.36.jpeg",
-        "tech" => ["linux"],
-        "lien" => "securite-avancee.php"
-    ]
-
-];
-
-$mot_cle = nettoyer($_GET['q'] ?? '');
-
-$resultats = [];
-
-if ($mot_cle !== '') {
-
-    foreach ($projets as $projet) {
-
-        if (
-            stripos($projet['titre'], $mot_cle) !== false ||
-            stripos($projet['description'], $mot_cle) !== false ||
-            stripos(implode(' ', $projet['tech']), $mot_cle) !== false
-        ) {
-            $resultats[] = $projet;
-        }
-    }
-} else {
-
-    $resultats = $projets;
+if (!empty($recherche)) {
+    $sql .= " WHERE titre LIKE ? OR description LIKE ? ";
 }
 
+$requete = $pdo->prepare($sql);
+
+if (!empty($recherche)) {
+    $motCle = "%" . $recherche . "%";
+    $requete->execute([$motCle, $motCle]);
+} else {
+    $requete->execute();
+}
+
+$projets = $requete->fetchAll();
+
 ?>
+
+
 <main>
     <form method="GET">
 
         <input
             type="text"
-            name="q"
+            name="recherche"
             placeholder="Rechercher un projet..."
             class="search"
-            value="<?= $mot_cle ?>">
+            value="<?= htmlspecialchars($recherche) ?>">
 
     </form>
 
     <section class="projects">
 
-        <?php if (empty($resultats)) : ?>
+        <?php if (empty($projets)) : ?>
 
             <p class="aucun-resultat">
                 Aucun projet trouvé.
@@ -97,11 +49,12 @@ if ($mot_cle !== '') {
 
         <?php else : ?>
 
-            <?php foreach ($resultats as $projet) : ?>
+            <?php foreach ($projets as $projet) : ?>
 
                 <article class="card">
 
-                    <img src="<?= htmlspecialchars($projet['image']) ?>" alt="<?= htmlspecialchars($projet['titre']) ?>">
+                    <img src="../images/<?= htmlspecialchars($projet['image']) ?>"
+                        alt="<?= htmlspecialchars($projet['titre']) ?>">
 
                     <h3><?= htmlspecialchars($projet['titre']) ?></h3>
 
@@ -109,10 +62,14 @@ if ($mot_cle !== '') {
 
                     <div class="tech">
 
-                        <?php foreach ($projet['tech'] as $tech) : ?>
+                        <?php
+                        $technologies = explode(',', $projet['technologies']);
+
+                        foreach ($technologies as $tech) :
+                        ?>
 
                             <span class="badge">
-                                <?= htmlspecialchars($tech) ?>
+                                <?= htmlspecialchars(trim($tech)) ?>
                             </span>
 
                         <?php endforeach; ?>
