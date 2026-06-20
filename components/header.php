@@ -25,8 +25,6 @@ $page_courante = basename($_SERVER['PHP_SELF']);
             <a href="<?= $page_courante == 'index.php' ? 'index.php' : '../index.php' ?>">Accueil</a>
             <a href="<?= $page_courante == 'index.php' ? 'pages/projets.php' : 'projets.php' ?>">Projets</a>
             <a href="<?= $page_courante == 'index.php' ? 'pages/contact.php' : 'contact.php' ?>">Contact</a>
-            <a href="<?= $page_courante == 'index.php' ? 'admin/connexion.php' : '../admin/connexion.php' ?>"> Administration
-            </a>
 
         </nav>
     </header>
